@@ -21,7 +21,10 @@ public class Driver {
     // ----------------------------------------------------
 
     /**
-     * Executes the main application loop.
+     * Executes the main application loop:
+     * 1. Builds the graph.
+     * 2. Processes the required requested flights file.
+     * 3. Enters an optional manual input loop.
      */
     public void run() {
         System.out.println("--- CS 3345 Flight Planner ---");
@@ -32,15 +35,25 @@ public class Driver {
             return;
         }
 
-        // 2. Main Interaction Loop (File or Manual Input)
+        // 2. Process the mandatory Requested Flights file (All 12 flights)
+        System.out.println("Processing File Requests...");
+        processRequestedFlightsFile(); // Executes the file-based requests first.
+
+        // 3. Secondary Interaction Loop (Manual Input / Exit)
         boolean running = true;
         while (running) {
-            char choice = promptForFlightPlanSource();
+
+            // Display secondary menu (only M and E options now)
+            System.out.println("\n--- Flight Plan Source ---");
+            System.out.println("Select next action:");
+            System.out.println("  [M] Enter a Manual Flight Request");
+            System.out.println("  [E] Exit Program");
+            System.out.print("Enter choice (M/E): ");
+
+            String input = scanner.nextLine().trim().toUpperCase();
+            char choice = input.isEmpty() ? 'X' : input.charAt(0);
 
             switch (choice) {
-                case 'F':
-                    processRequestedFlightsFile();
-                    break;
                 case 'M':
                     processManualFlightPlan();
                     break;
@@ -48,7 +61,7 @@ public class Driver {
                     running = false;
                     break;
                 default:
-                    System.out.println("Invalid choice. Please enter F, M, or E.");
+                    System.out.println("Invalid choice. Please enter M or E.");
             }
         }
 
@@ -64,74 +77,107 @@ public class Driver {
      * Prompts user for the flight data file and populates the FlightGraph.
      */
     private boolean promptAndBuildGraph() {
-        System.out.print("Enter the path to the Flight Data file (e.g., flight_data.txt): ");
+        System.out.print("Enter the path to the Flight Data file (e.g., src/main/resources/OriginationDestinationData.txt): ");
         String fileName = scanner.nextLine().trim();
 
-        try (Scanner fileScanner = new Scanner(new File(fileName))) {
-            // Read the first line which indicates the total number of records [cite: 48, 54]
-            int numRecords = fileScanner.nextInt();
-            fileScanner.nextLine(); // Consume the rest of the line
+        int recordsAdded = 0;
 
-            System.out.println("Building graph with " + numRecords + " records...");
+        try (Scanner fileScanner = new Scanner(new File(fileName))) {
+
+            // Safely parse the integer count from the first line
+            if (!fileScanner.hasNextLine()) {
+                System.err.println("Error: Input file is empty.");
+                return false;
+            }
+            String firstLine = fileScanner.nextLine();
+            Scanner lineScanner = new Scanner(firstLine);
+            if (!lineScanner.hasNextInt()) {
+                System.err.println("Error: Could not find the integer record count in the first line: " + firstLine);
+                return false;
+            }
+            int numRecords = lineScanner.nextInt();
+
+            System.out.println("Adding " + numRecords + " records to the graph from " + fileName + "...");
 
             for (int i = 0; i < numRecords; i++) {
+                if (!fileScanner.hasNextLine()) {
+                    System.err.println("Warning: File ended prematurely. Expected " + numRecords + " records.");
+                    break;
+                }
+
                 String line = fileScanner.nextLine();
-                // Data is separated by a pipe '|' [cite: 56]
                 String[] parts = line.split("\\|");
 
-                if (parts.length < 3) continue;
+                // CRITICAL FIX: The data file has 4 pipe-separated parts (City|City|Cost|Time)
+                if (parts.length < 4) continue;
 
-                // Part 1: Origin and Destination (space separated)
-                String[] cityData = parts[0].trim().split("\\s+");
-                String origin = cityData[0];
-                String destination = cityData[1];
+                String origin = parts[0].trim();
+                String destination = parts[1].trim();
 
-                // Part 2 & 3: Cost and Time
-                int cost = Integer.parseInt(parts[1].trim());
-                int time = Integer.parseInt(parts[2].trim());
+                try {
+                    int cost = Integer.parseInt(parts[2].trim());
+                    int time = Integer.parseInt(parts[3].trim());
 
-                // Add the path (FlightGraph handles bi-directionality)
-                graph.addFlightPath(origin, destination, cost, time);
+                    graph.addFlightPath(origin, destination, cost, time);
+                    recordsAdded++;
+                } catch (NumberFormatException e) {
+                    // Skip line with bad numeric format
+                }
             }
-            System.out.println("Graph built successfully.");
+            System.out.println("Successfully added " + recordsAdded + " flight paths.");
             return true;
+
         } catch (FileNotFoundException e) {
-            System.err.println("Error: File not found at the specified path.");
+            System.err.println("Error: File not found at the specified path. Check your path.");
             return false;
-        } catch (InputMismatchException | NumberFormatException e) {
-            System.err.println("Error: Input file format is incorrect. Check the integer count or cost/time values.");
+        } catch (Exception e) {
+            System.err.println("An unexpected error occurred during file parsing.");
+            e.printStackTrace();
             return false;
         }
     }
 
     /**
      * Processes a file containing multiple flight requests.
+     * Called once at startup to process the required output file.
      */
     private void processRequestedFlightsFile() {
-        System.out.print("Enter the path to the Requested Flight Plans file: ");
+        System.out.print("Enter the path to the Requested Flight Plans file (e.g., src/main/resources/RequestedFlights.txt): ");
         String fileName = scanner.nextLine().trim();
 
         try (Scanner fileScanner = new Scanner(new File(fileName))) {
-            int numRequests = fileScanner.nextInt();
-            fileScanner.nextLine(); // Consume the number of requests [cite: 59]
+            // Safely parse the number of requests from the first line
+            String firstLine = fileScanner.nextLine();
+            Scanner lineScanner = new Scanner(firstLine);
+            if (!lineScanner.hasNextInt()) {
+                System.err.println("Error: Could not find integer request count in the file.");
+                return;
+            }
+            int numRequests = lineScanner.nextInt();
 
             for (int i = 1; i <= numRequests; i++) {
-                String line = fileScanner.nextLine();
-                String[] parts = line.split("\\|"); // File is pipe-delimited [cite: 60]
+                if (!fileScanner.hasNextLine()) {
+                    System.err.println("Warning: Request file ended early.");
+                    break;
+                }
 
+                String line = fileScanner.nextLine();
+                String[] parts = line.split("\\|");
+
+                // RequestedFlights.txt should have 3 parts (Origin|Destination|SortBy)
                 if (parts.length != 3) {
-                    System.err.println("Skipping Request " + i + ": Incorrect format.");
+                    System.err.println("Skipping Request " + i + ": Incorrect format: " + line);
                     continue;
                 }
 
                 String origin = parts[0].trim();
                 String destination = parts[1].trim();
-                char sortBy = parts[2].trim().toUpperCase().charAt(0); // 'T' or 'C' [cite: 60]
+                char sortBy = parts[2].trim().toUpperCase().charAt(0); // 'T' or 'C'
 
                 findAndOutputPlans(i, origin, destination, sortBy);
             }
         } catch (FileNotFoundException e) {
-            System.err.println("Error: Requested Flights file not found.");
+            System.err.println("Error: Requested Flights file not found. Check your path.");
         }
     }
 
@@ -158,7 +204,6 @@ public class Driver {
             return;
         }
 
-        // Use 999 as a placeholder flight number for manual requests
         findAndOutputPlans(999, origin, destination, sortBy);
     }
 
@@ -174,7 +219,7 @@ public class Driver {
         // 1. Search (Phase 2: Iterative Backtracking)
         List<PathResult> allPaths = finder.findFlights(graph, origin, destination, sortBy);
 
-        // Output Header [cite: 68]
+        // Output Header
         String sortCriteria = (sortBy == 'T' ? "Time" : "Cost");
         System.out.println("\nFlight " + flightNumber + ": " + origin + ", " + destination + " (" + sortCriteria + ")");
 
@@ -187,7 +232,7 @@ public class Driver {
         // 3. Sort (Phase 3: HeapSort)
         List<PathResult> sortedPaths = sorter.heapSort(allPaths);
 
-        // 4. Output Top 3 Plans [cite: 65, 66]
+        // 4. Output Top 3 Plans
         int numToOutput = Math.min(3, sortedPaths.size());
 
         for (int i = 0; i < numToOutput; i++) {
@@ -196,7 +241,7 @@ public class Driver {
             // Format the path string (e.g., Dallas -> Austin -> Houston)
             String pathStr = formatPath(plan.getPath());
 
-            // Output format adherence is critical (Path X: ... Cost: X.XX) [cite: 69]
+            // Output format adherence is critical (Path X: ... Cost: X.XX)
             System.out.printf("    Path %d: %s. Time: %d Cost: %.2f\n",
                     i + 1,
                     pathStr,
@@ -211,21 +256,5 @@ public class Driver {
      */
     private String formatPath(List<String> path) {
         return String.join(" -> ", path);
-    }
-
-    /**
-     * Prompts the user for the source of flight plans.
-     */
-    private char promptForFlightPlanSource() {
-        System.out.println("\n--- Flight Plan Source ---");
-        System.out.println("Select how to input flight requests:");
-        System.out.println("  [F] Process a Requested Flights File");
-        System.out.println("  [M] Enter a Manual Flight Request");
-        System.out.println("  [E] Exit Program");
-        System.out.print("Enter choice (F/M/E): ");
-
-        String input = scanner.nextLine().trim().toUpperCase();
-        if (input.isEmpty()) return 'X';
-        return input.charAt(0);
     }
 }

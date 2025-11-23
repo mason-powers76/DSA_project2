@@ -1,0 +1,13 @@
+12
+Dallas|Houston|T
+Dallas|Houston|C
+Dallas|Orlando|T
+Dallas|NewYork|C
+Chicago|Dallas|T
+Chicago|Orlando|C
+Phoenix|Boise|T
+ElPaso|LasVegas|T
+Denver|Minneapolis|C
+Austin|Minneapolis|T
+Baltimore|Boise|C
+Albuquerque|Orlando|T

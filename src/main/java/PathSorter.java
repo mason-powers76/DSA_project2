@@ -11,12 +11,13 @@ public class PathSorter {
 
     // Internal array to manage the heap elements
     private PathResult[] heap;
-    private int size;
+    private int size; // Tracks the current size of the heap portion of the array
 
     /**
      * Sorts the list of paths using the HeapSort algorithm (Min-Heap).
      * @param paths The list of PathResult objects to be sorted.
-     * @return A List of PathResult objects sorted from most efficient to least efficient.
+     * @return A List of PathResult objects sorted from most efficient (lowest cost/time)
+     * to least efficient (highest cost/time).
      */
     public List<PathResult> heapSort(List<PathResult> paths) {
         if (paths == null || paths.isEmpty()) {
@@ -28,20 +29,34 @@ public class PathSorter {
         this.size = paths.size();
 
         // 2. Build the Heap (Min-Heapify Phase)
+        // Start from the last non-leaf node
         for (int i = size / 2 - 1; i >= 0; i--) {
             minHeapify(i);
         }
 
         // 3. Sorting Down Phase (Extracting the minimum elements)
+        // After this loop, the array is sorted DESCENDINGLY (largest to smallest).
         for (int i = size - 1; i > 0; i--) {
             // Swap root (smallest) with the last unsorted element
             swap(0, i);
+
+            // Reduce the size of the heap portion
             size--;
+
+            // Restore the Min-Heap property on the reduced heap
             minHeapify(0);
         }
 
-        // The array is now fully sorted.
-        return new ArrayList<>(Arrays.asList(this.heap));
+        // --- CRITICAL FIX: REVERSE THE ORDER ---
+        // The array is now sorted from largest to smallest. We need smallest to largest.
+        List<PathResult> sortedList = new ArrayList<>(Arrays.asList(this.heap));
+        Collections.reverse(sortedList);
+
+        // Reset size back to full array length for proper object state (cleanup)
+        this.size = this.heap.length;
+
+        // Return the list, now correctly ordered from most efficient (min) to least efficient (max).
+        return sortedList;
     }
 
     /**
@@ -52,12 +67,12 @@ public class PathSorter {
         int left = 2 * i + 1;
         int right = 2 * i + 2;
 
-        // Check left child
+        // Check if the left child exists and is smaller than the current smallest
         if (left < size && heap[left].compareTo(heap[smallest]) < 0) {
             smallest = left;
         }
 
-        // Check right child
+        // Check if the right child exists and is smaller than the current smallest
         if (right < size && heap[right].compareTo(heap[smallest]) < 0) {
             smallest = right;
         }

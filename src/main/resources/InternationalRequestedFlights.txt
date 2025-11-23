@@ -1,0 +1,12 @@
+11
+NewYork|London|T
+NewYork|Singapore|C
+LosAngeles|Rome|T
+Toronto|Sydney|C
+MexicoCity|Johannesburg|T
+Tokyo|Madrid|C
+Vancouver|Dubai|T
+SaoPaulo|HongKong|T
+Johannesburg|NewYork|C
+Honolulu|Frankfurt|T
+Beijing|Rome|C
