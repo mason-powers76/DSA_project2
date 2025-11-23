@@ -1,24 +1,17 @@
+package core;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
-/**
- * Implements the HeapSort algorithm using a Min-Heap structure to sort
- * PathResult objects by cost or time (determined by PathResult.compareTo).
- */
+//implements the heap sort for the path objects
 public class PathSorter {
 
     // Internal array to manage the heap elements
     private PathResult[] heap;
     private int size; // Tracks the current size of the heap portion of the array
 
-    /**
-     * Sorts the list of paths using the HeapSort algorithm (Min-Heap).
-     * @param paths The list of PathResult objects to be sorted.
-     * @return A List of PathResult objects sorted from most efficient (lowest cost/time)
-     * to least efficient (highest cost/time).
-     */
     public List<PathResult> heapSort(List<PathResult> paths) {
         if (paths == null || paths.isEmpty()) {
             return Collections.emptyList();
@@ -35,7 +28,6 @@ public class PathSorter {
         }
 
         // 3. Sorting Down Phase (Extracting the minimum elements)
-        // After this loop, the array is sorted DESCENDINGLY (largest to smallest).
         for (int i = size - 1; i > 0; i--) {
             // Swap root (smallest) with the last unsorted element
             swap(0, i);
@@ -47,7 +39,6 @@ public class PathSorter {
             minHeapify(0);
         }
 
-        // --- CRITICAL FIX: REVERSE THE ORDER ---
         // The array is now sorted from largest to smallest. We need smallest to largest.
         List<PathResult> sortedList = new ArrayList<>(Arrays.asList(this.heap));
         Collections.reverse(sortedList);
@@ -59,9 +50,6 @@ public class PathSorter {
         return sortedList;
     }
 
-    /**
-     * Restores the Min-Heap property starting at a given index.
-     */
     private void minHeapify(int i) {
         int smallest = i;
         int left = 2 * i + 1;
@@ -83,9 +71,6 @@ public class PathSorter {
         }
     }
 
-    /**
-     * Helper method to swap two elements in the array.
-     */
     private void swap(int i, int j) {
         PathResult temp = heap[i];
         heap[i] = heap[j];

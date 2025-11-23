@@ -1,3 +1,5 @@
+package core;
+
 public class FlightEdge {
     private final String destination;
     private final int cost; // Dollar cost

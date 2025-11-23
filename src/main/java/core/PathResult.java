@@ -1,9 +1,8 @@
+package core;
+
 import java.util.LinkedList;
 
-/**
- * Represents a complete, found flight plan (path) with its total metrics.
- * Implements Comparable for later use with HeapSort.
- */
+//represents the paths that are found
 public class PathResult implements Comparable<PathResult> {
     private final LinkedList<String> path;
     private final int totalCost;
@@ -13,7 +12,7 @@ public class PathResult implements Comparable<PathResult> {
     private char sortBy;
 
     public PathResult(LinkedList<String> path, int cost, int time, char sortBy) {
-        // Use a deep copy to ensure the path history is immutable
+
         this.path = new LinkedList<>(path);
         this.totalCost = cost;
         this.totalTime = time;
@@ -26,10 +25,7 @@ public class PathResult implements Comparable<PathResult> {
     public LinkedList<String> getPath() { return path; }
     public void setSortBy(char sortBy) { this.sortBy = sortBy; }
 
-    /**
-     * Compares this path to another based on the 'sortBy' flag (T for Time, C for Cost)[cite: 60].
-     * Required for HeapSort implementation.
-     */
+    //comparator for the paths to determine the cost and time for each
     @Override
     public int compareTo(PathResult other) {
         if (sortBy == 'T') {
@@ -41,5 +37,4 @@ public class PathResult implements Comparable<PathResult> {
         return Integer.compare(this.totalTime, other.totalTime);
     }
 
-    // We will add a toString method later to handle the output format [cite: 68, 69, 70]
 }

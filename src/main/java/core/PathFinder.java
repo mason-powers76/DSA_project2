@@ -1,11 +1,11 @@
+package core;
+
 import java.util.Stack;
 import java.util.LinkedList;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * Executes the exhaustive search using an Iterative Backtracking algorithm (stack-based DFS).
- */
+//performs the exhaustive search and iterative backtracking
 public class PathFinder {
 
     // Internal class to hold the necessary state for the stack
@@ -14,9 +14,9 @@ public class PathFinder {
         final int accumulatedCost;
         final int accumulatedTime;
         final LinkedList<String> pathHistory;
-        final HashSet<String> visitedCities; // Used for O(1) cycle detection [cite: 46]
+        final HashSet<String> visitedCities;
 
-        // REQUIRED CONSTRUCTOR
+        // constructor
         public SearchState(String currentCityName, int accumulatedCost, int accumulatedTime,
                            LinkedList<String> pathHistory, HashSet<String> visitedCities) {
             this.currentCityName = currentCityName;
@@ -27,11 +27,7 @@ public class PathFinder {
         }
     }
 
-    /**
-     * Executes an iterative backtracking search to find all non-cyclic paths[cite: 46, 83].
-     * @param sortBy 'T' for time, 'C' for cost (used for PathResult initialization).
-     * @return A list of all valid PathResult objects found.
-     */
+
     public List<PathResult> findFlights(FlightGraph graph, String startCity, String endCity, char sortBy) {
 
         List<PathResult> allPaths = new LinkedList<>();
@@ -52,7 +48,7 @@ public class PathFinder {
 
             // Success Condition Check
             if (current.currentCityName.equalsIgnoreCase(endCity)) {
-                // Record the path found and continue searching for others [cite: 82]
+                // Record the path found and continue searching for others
                 PathResult pathFound = new PathResult(
                         current.pathHistory,
                         current.accumulatedCost,
@@ -70,10 +66,9 @@ public class PathFinder {
             for (FlightEdge flight : city.getFlights()) {
                 String nextCity = flight.getDestination();
 
-                // Cycle Detection: Check if the next city is already in the path [cite: 46]
+                // Cycle Detection: Check if the next city is already in the path
                 if (!current.visitedCities.contains(nextCity)) {
 
-                    // CRUCIAL: DEEP COPYING STATE
 
                     // Create new history objects for the next step
                     HashSet<String> nextVisited = new HashSet<>(current.visitedCities);

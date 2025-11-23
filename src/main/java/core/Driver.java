@@ -1,14 +1,11 @@
+package core;
+
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * Manages user interaction, file loading, and coordination between
- * the data structure (FlightGraph) and the algorithms (PathFinder, PathSorter).
- * This class minimizes logic in the main method.
- */
+//Provides coordination between the classes as well as file loading
 public class Driver {
 
     private final Scanner scanner = new Scanner(System.in);
@@ -16,35 +13,25 @@ public class Driver {
     private final PathFinder finder = new PathFinder();
     private final PathSorter sorter = new PathSorter();
 
-    // ----------------------------------------------------
-    // Public Entry Method
-    // ----------------------------------------------------
-
-    /**
-     * Executes the main application loop:
-     * 1. Builds the graph.
-     * 2. Processes the required requested flights file.
-     * 3. Enters an optional manual input loop.
-     */
     public void run() {
-        System.out.println("--- CS 3345 Flight Planner ---");
+        System.out.println("CS/CE 3345 Flight Planner");
 
-        // 1. Build the Graph from the Flight Data File
+        // 1. Build the graph
         if (!promptAndBuildGraph()) {
-            System.out.println("Fatal error: Could not load flight data. Exiting.");
+            System.out.println("Error: Could not load flight data. Exiting.");
             return;
         }
 
-        // 2. Process the mandatory Requested Flights file (All 12 flights)
+        // 2. Process the Requested Flights
         System.out.println("Processing File Requests...");
-        processRequestedFlightsFile(); // Executes the file-based requests first.
+        processRequestedFlightsFile();
 
-        // 3. Secondary Interaction Loop (Manual Input / Exit)
+        // 3. Interaction Loop (Manual Input / Exit)
         boolean running = true;
         while (running) {
 
             // Display secondary menu (only M and E options now)
-            System.out.println("\n--- Flight Plan Source ---");
+            System.out.println("\nFlight Plan Source");
             System.out.println("Select next action:");
             System.out.println("  [M] Enter a Manual Flight Request");
             System.out.println("  [E] Exit Program");
@@ -65,17 +52,11 @@ public class Driver {
             }
         }
 
-        System.out.println("\n--- Program Exited. Thank you. ---");
+        System.out.println("\nProgram Exited. Thank you.");
         scanner.close();
     }
 
-    // ----------------------------------------------------
-    // Phase 3: File Reading Logic
-    // ----------------------------------------------------
-
-    /**
-     * Prompts user for the flight data file and populates the FlightGraph.
-     */
+    //Prompts use for flight data files
     private boolean promptAndBuildGraph() {
         System.out.print("Enter the path to the Flight Data file (e.g., src/main/resources/OriginationDestinationData.txt): ");
         String fileName = scanner.nextLine().trim();
@@ -84,7 +65,7 @@ public class Driver {
 
         try (Scanner fileScanner = new Scanner(new File(fileName))) {
 
-            // Safely parse the integer count from the first line
+            // records the integer to know input file length
             if (!fileScanner.hasNextLine()) {
                 System.err.println("Error: Input file is empty.");
                 return false;
@@ -108,7 +89,6 @@ public class Driver {
                 String line = fileScanner.nextLine();
                 String[] parts = line.split("\\|");
 
-                // CRITICAL FIX: The data file has 4 pipe-separated parts (City|City|Cost|Time)
                 if (parts.length < 4) continue;
 
                 String origin = parts[0].trim();
@@ -121,7 +101,7 @@ public class Driver {
                     graph.addFlightPath(origin, destination, cost, time);
                     recordsAdded++;
                 } catch (NumberFormatException e) {
-                    // Skip line with bad numeric format
+
                 }
             }
             System.out.println("Successfully added " + recordsAdded + " flight paths.");
@@ -137,10 +117,6 @@ public class Driver {
         }
     }
 
-    /**
-     * Processes a file containing multiple flight requests.
-     * Called once at startup to process the required output file.
-     */
     private void processRequestedFlightsFile() {
         System.out.print("Enter the path to the Requested Flight Plans file (e.g., src/main/resources/RequestedFlights.txt): ");
         String fileName = scanner.nextLine().trim();
@@ -164,7 +140,6 @@ public class Driver {
                 String line = fileScanner.nextLine();
                 String[] parts = line.split("\\|");
 
-                // RequestedFlights.txt should have 3 parts (Origin|Destination|SortBy)
                 if (parts.length != 3) {
                     System.err.println("Skipping Request " + i + ": Incorrect format: " + line);
                     continue;
@@ -181,9 +156,7 @@ public class Driver {
         }
     }
 
-    /**
-     * Processes a single flight request entered manually by the user.
-     */
+    //process for a manual flight
     private void processManualFlightPlan() {
         System.out.print("\nEnter request (Format: Origin|Destination|SortBy - e.g., Chicago|Dallas|C): ");
         String line = scanner.nextLine().trim();
@@ -207,16 +180,10 @@ public class Driver {
         findAndOutputPlans(999, origin, destination, sortBy);
     }
 
-    // ----------------------------------------------------
-    // Phase 4: Core Logic Coordination & Output
-    // ----------------------------------------------------
-
-    /**
-     * The core method that runs the search, sorts the results, and prints the output.
-     */
+    //process for the search and path finder
     private void findAndOutputPlans(int flightNumber, String origin, String destination, char sortBy) {
 
-        // 1. Search (Phase 2: Iterative Backtracking)
+        // 1. Search
         List<PathResult> allPaths = finder.findFlights(graph, origin, destination, sortBy);
 
         // Output Header
@@ -229,7 +196,7 @@ public class Driver {
             return;
         }
 
-        // 3. Sort (Phase 3: HeapSort)
+        // 3. Sort
         List<PathResult> sortedPaths = sorter.heapSort(allPaths);
 
         // 4. Output Top 3 Plans
@@ -241,7 +208,7 @@ public class Driver {
             // Format the path string (e.g., Dallas -> Austin -> Houston)
             String pathStr = formatPath(plan.getPath());
 
-            // Output format adherence is critical (Path X: ... Cost: X.XX)
+            // Output format adherence (Path X: ... Cost: X.XX)
             System.out.printf("    Path %d: %s. Time: %d Cost: %.2f\n",
                     i + 1,
                     pathStr,
@@ -251,9 +218,6 @@ public class Driver {
         }
     }
 
-    /**
-     * Helper to format the path list into the required string format.
-     */
     private String formatPath(List<String> path) {
         return String.join(" -> ", path);
     }
