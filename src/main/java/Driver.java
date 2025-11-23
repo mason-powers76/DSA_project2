@@ -7,6 +7,7 @@ import java.util.Scanner;
 /**
  * Manages user interaction, file loading, and coordination between
  * the data structure (FlightGraph) and the algorithms (PathFinder, PathSorter).
+ * This class minimizes logic in the main method.
  */
 public class Driver {
 
@@ -61,14 +62,13 @@ public class Driver {
 
     /**
      * Prompts user for the flight data file and populates the FlightGraph.
-     * @return true if the graph was built successfully, false otherwise.
      */
     private boolean promptAndBuildGraph() {
         System.out.print("Enter the path to the Flight Data file (e.g., flight_data.txt): ");
         String fileName = scanner.nextLine().trim();
 
         try (Scanner fileScanner = new Scanner(new File(fileName))) {
-            // Read the first line which indicates the total number of records [cite: 80, 86]
+            // Read the first line which indicates the total number of records [cite: 48, 54]
             int numRecords = fileScanner.nextInt();
             fileScanner.nextLine(); // Consume the rest of the line
 
@@ -76,17 +76,17 @@ public class Driver {
 
             for (int i = 0; i < numRecords; i++) {
                 String line = fileScanner.nextLine();
-                // Data is separated by a pipe '|' [cite: 88]
+                // Data is separated by a pipe '|' [cite: 56]
                 String[] parts = line.split("\\|");
 
-                if (parts.length < 3) continue; // Skip malformed lines
+                if (parts.length < 3) continue;
 
                 // Part 1: Origin and Destination (space separated)
                 String[] cityData = parts[0].trim().split("\\s+");
                 String origin = cityData[0];
                 String destination = cityData[1];
 
-                // Part 2 & 3: Cost and Time (separated by pipe)
+                // Part 2 & 3: Cost and Time
                 int cost = Integer.parseInt(parts[1].trim());
                 int time = Integer.parseInt(parts[2].trim());
 
@@ -113,11 +113,11 @@ public class Driver {
 
         try (Scanner fileScanner = new Scanner(new File(fileName))) {
             int numRequests = fileScanner.nextInt();
-            fileScanner.nextLine();
+            fileScanner.nextLine(); // Consume the number of requests [cite: 59]
 
             for (int i = 1; i <= numRequests; i++) {
                 String line = fileScanner.nextLine();
-                String[] parts = line.split("\\|"); // File is pipe-delimited [cite: 92]
+                String[] parts = line.split("\\|"); // File is pipe-delimited [cite: 60]
 
                 if (parts.length != 3) {
                     System.err.println("Skipping Request " + i + ": Incorrect format.");
@@ -126,7 +126,7 @@ public class Driver {
 
                 String origin = parts[0].trim();
                 String destination = parts[1].trim();
-                char sortBy = parts[2].trim().toUpperCase().charAt(0); // 'T' or 'C' [cite: 92]
+                char sortBy = parts[2].trim().toUpperCase().charAt(0); // 'T' or 'C' [cite: 60]
 
                 findAndOutputPlans(i, origin, destination, sortBy);
             }
@@ -168,28 +168,26 @@ public class Driver {
 
     /**
      * The core method that runs the search, sorts the results, and prints the output.
-     * This minimizes code in the other interaction methods.
      */
     private void findAndOutputPlans(int flightNumber, String origin, String destination, char sortBy) {
 
         // 1. Search (Phase 2: Iterative Backtracking)
         List<PathResult> allPaths = finder.findFlights(graph, origin, destination, sortBy);
 
-        // Output Header
+        // Output Header [cite: 68]
         String sortCriteria = (sortBy == 'T' ? "Time" : "Cost");
         System.out.println("\nFlight " + flightNumber + ": " + origin + ", " + destination + " (" + sortCriteria + ")");
 
         // 2. Handle No Path Found
         if (allPaths.isEmpty()) {
-            System.out.println("    No flight plan can be created between " + origin + " and " + destination + "."); [cite: 99]
+            System.out.println("    No flight plan can be created between " + origin + " and " + destination + ".");
             return;
         }
 
         // 3. Sort (Phase 3: HeapSort)
-        // Since we want the most efficient (smallest cost/time), we use the Min-Heap.
         List<PathResult> sortedPaths = sorter.heapSort(allPaths);
 
-        // 4. Output Top 3 Plans [cite: 97, 98]
+        // 4. Output Top 3 Plans [cite: 65, 66]
         int numToOutput = Math.min(3, sortedPaths.size());
 
         for (int i = 0; i < numToOutput; i++) {
@@ -198,7 +196,7 @@ public class Driver {
             // Format the path string (e.g., Dallas -> Austin -> Houston)
             String pathStr = formatPath(plan.getPath());
 
-            // Output format adherence is critical [cite: 101]
+            // Output format adherence is critical (Path X: ... Cost: X.XX) [cite: 69]
             System.out.printf("    Path %d: %s. Time: %d Cost: %.2f\n",
                     i + 1,
                     pathStr,
@@ -210,8 +208,6 @@ public class Driver {
 
     /**
      * Helper to format the path list into the required string format.
-     * @param path A list of city names.
-     * @return A string like "CityA -> CityB -> CityC".
      */
     private String formatPath(List<String> path) {
         return String.join(" -> ", path);

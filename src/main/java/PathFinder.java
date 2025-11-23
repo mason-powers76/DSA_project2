@@ -3,42 +3,46 @@ import java.util.LinkedList;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * Executes the exhaustive search using an Iterative Backtracking algorithm (stack-based DFS).
+ */
 public class PathFinder {
 
-    // Internal class to hold the search state on the stack
+    // Internal class to hold the necessary state for the stack
     private static class SearchState {
         final String currentCityName;
         final int accumulatedCost;
         final int accumulatedTime;
         final LinkedList<String> pathHistory;
-        final HashSet<String> visitedCities;
-        // ... (Constructor and Getters will be needed)
+        final HashSet<String> visitedCities; // Used for O(1) cycle detection [cite: 46]
+
+        // REQUIRED CONSTRUCTOR
+        public SearchState(String currentCityName, int accumulatedCost, int accumulatedTime,
+                           LinkedList<String> pathHistory, HashSet<String> visitedCities) {
+            this.currentCityName = currentCityName;
+            this.accumulatedCost = accumulatedCost;
+            this.accumulatedTime = accumulatedTime;
+            this.pathHistory = pathHistory;
+            this.visitedCities = visitedCities;
+        }
     }
 
     /**
-     * Executes an iterative backtracking search to find all paths.
-     * @param graph The FlightGraph data container.
-     * @param startCity The origin city name.
-     * @param endCity The destination city name.
+     * Executes an iterative backtracking search to find all non-cyclic paths[cite: 46, 83].
      * @param sortBy 'T' for time, 'C' for cost (used for PathResult initialization).
-     * @return A list of all valid FlightPlan objects found.
+     * @return A list of all valid PathResult objects found.
      */
     public List<PathResult> findFlights(FlightGraph graph, String startCity, String endCity, char sortBy) {
 
-        // Final list to store all successful paths
         List<PathResult> allPaths = new LinkedList<>();
-
-        // Stack for the iterative search (simulates recursion)
         Stack<SearchState> stack = new Stack<>();
 
         // 1. Initial State Setup
-        // Create the history objects for the starting city
         LinkedList<String> initialPath = new LinkedList<>();
         initialPath.add(startCity);
         HashSet<String> initialVisited = new HashSet<>();
         initialVisited.add(startCity);
 
-        // Push the starting state onto the stack
         SearchState initialState = new SearchState(startCity, 0, 0, initialPath, initialVisited);
         stack.push(initialState);
 
@@ -48,7 +52,7 @@ public class PathFinder {
 
             // Success Condition Check
             if (current.currentCityName.equalsIgnoreCase(endCity)) {
-                // If we hit the destination, record the result and continue the search
+                // Record the path found and continue searching for others [cite: 82]
                 PathResult pathFound = new PathResult(
                         current.pathHistory,
                         current.accumulatedCost,
@@ -56,28 +60,25 @@ public class PathFinder {
                         sortBy
                 );
                 allPaths.add(pathFound);
-                continue; // Found a path, but must keep searching for others
+                continue;
             }
 
-            // Get the CityNode to access its neighbors (outgoing flights)
             CityNode city = graph.getCity(current.currentCityName);
-            if (city == null) continue; // Should not happen if graph is built correctly
+            if (city == null) continue;
 
-            // 3. Explore Neighbors (Try all outgoing edges)
+            // 3. Explore Neighbors
             for (FlightEdge flight : city.getFlights()) {
                 String nextCity = flight.getDestination();
 
-                // Cycle Detection: Check if the next city is already in the path
+                // Cycle Detection: Check if the next city is already in the path [cite: 46]
                 if (!current.visitedCities.contains(nextCity)) {
 
-                    // Crucial Step: Deep Copying State for the next step!
-                    // ----------------------------------------------------
+                    // CRUCIAL: DEEP COPYING STATE
 
-                    // New Visited Set (deep copy)
+                    // Create new history objects for the next step
                     HashSet<String> nextVisited = new HashSet<>(current.visitedCities);
                     nextVisited.add(nextCity);
 
-                    // New Path History (deep copy)
                     LinkedList<String> nextPath = new LinkedList<>(current.pathHistory);
                     nextPath.add(nextCity);
 
@@ -95,8 +96,8 @@ public class PathFinder {
                     );
                     stack.push(nextState);
                 }
-            } // End of FlightEdge exploration
-        } // End of while loop
+            }
+        }
 
         return allPaths;
     }
