@@ -1,4 +1,4 @@
-12
+13
 Dallas|Houston|T
 Dallas|Houston|C
 Dallas|Orlando|T
@@ -11,3 +11,4 @@ Denver|Minneapolis|C
 Austin|Minneapolis|T
 Baltimore|Boise|C
 Albuquerque|Orlando|T
+Dallas|Tokyo|T
